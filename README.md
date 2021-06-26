@@ -56,7 +56,7 @@ input UpdateUserInput {
           buildInputError: (message: string) => {
             return new Error(message);
           },
-        })
-      }
+        }),
+      },
     });
     ```
