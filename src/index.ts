@@ -1,4 +1,4 @@
-import { defaultFieldResolver, GraphQLInputObjectType, GraphQLNonNull, GraphQLObjectType } from 'graphql';
+import { defaultFieldResolver, GraphQLError, GraphQLInputObjectType, GraphQLNonNull, GraphQLObjectType } from 'graphql';
 import { SchemaDirectiveVisitor, SchemaDirectiveVisitorClass } from 'graphql-tools';
 import get from 'lodash/get';
 
@@ -14,7 +14,7 @@ type TCreateDirectiveOptions = {
 
 export function createNonNullDirective(opts?: TCreateDirectiveOptions): SchemaDirectiveVisitorClass {
   const directiveName = opts?.directiveName ?? 'nonNull';
-  const buildInputError = opts?.buildInputError ?? ((message: string) => new Error(message));
+  const buildInputError = opts?.buildInputError ?? ((message: string) => new GraphQLError(message));
 
   const processedSchemas = new WeakSet();
 
@@ -124,7 +124,7 @@ export function createNonNullDirective(opts?: TCreateDirectiveOptions): SchemaDi
       const fieldName = field.astNode.name.value;
 
       if (field.type instanceof GraphQLNonNull) {
-        throw new Error(`@nonNull cannot be used on a field that is already non-nullish (! operator): "${fieldName}: ${field.type}"`);
+        throw new Error(`@${directiveName} cannot be used on a field that is already non-nullish (! operator): "${fieldName}: ${field.type}"`);
       }
 
       return field;
