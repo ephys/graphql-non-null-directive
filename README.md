@@ -32,6 +32,34 @@ input UpdateUserInput {
 }
 ```
 
+### Caveats
+
+The `@nonNull` directive cannot be used on Argument Definitions. 
+That is because, unlink in Object Inputs, GraphQL.js will always default optional arguments to `null`.
+
+Instead of:
+
+```graphql
+# this does not work!
+type Mutation {
+  updateUser(firstName: String @nonNull): User
+}
+```
+
+Do:
+
+```graphql
+# this works!
+type Mutation {
+  updateUser(input: UpdateUserInput!): User
+}
+
+input UpdateUserInput {
+  firstName: String @nonNull
+  # ...
+}
+```
+
 ## Usage
 
 **NB: This library is built using graphql-tools and should be compatible with apollo*
