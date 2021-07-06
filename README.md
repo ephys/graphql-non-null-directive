@@ -35,7 +35,7 @@ input UpdateUserInput {
 ### Caveats
 
 The `@nonNull` directive cannot be used on Argument Definitions. 
-That is because, unlink in Object Inputs, GraphQL.js will always default optional arguments to `null`.
+That is because, unlike in Object Inputs, GraphQL.js will always default optional arguments to `null`.
 
 Instead of:
 
