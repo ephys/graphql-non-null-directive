@@ -1,6 +1,6 @@
 {
   "name": "@ephys/graphql-non-null-directive",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "description": "Adds a @nonNull directive for GraphQL",
   "main": "lib/index.js",
   "scripts": {
