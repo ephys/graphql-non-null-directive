@@ -1,4 +1,11 @@
-import { defaultFieldResolver, GraphQLError, GraphQLInputObjectType, GraphQLNonNull, GraphQLObjectType } from 'graphql';
+import {
+  defaultFieldResolver,
+  GraphQLError,
+  GraphQLInputField,
+  GraphQLInputObjectType,
+  GraphQLNonNull,
+  GraphQLObjectType,
+} from 'graphql';
 import { SchemaDirectiveVisitor, SchemaDirectiveVisitorClass } from 'graphql-tools';
 import get from 'lodash/get';
 
@@ -19,23 +26,12 @@ export function createNonNullDirective(opts?: TCreateDirectiveOptions): SchemaDi
   const processedSchemas = new WeakSet();
 
   class NonNullDirective extends SchemaDirectiveVisitor {
-    // TODO: Add support for ARGUMENT_DEFINITION (currently only INPUT_FIELD_DEFINITION is supported) (the arg var itself needs to be checked)
-    //  need to go through `visitArgumentDefinition` because their AST is not available in `visitInputFieldDefinition`
-    //
-    // visitArgumentDefinition(argument: GraphQLArgument, details: {
-    //   field: GraphQLField<any, any>;
-    //   objectType: GraphQLObjectType | GraphQLInterfaceType;
-    // }) {
-    //   console.log('visitArgumentDefinition');
-    //   this.checkField(argument);
-    //   this.processSchema();
-    // }
-    visitInputFieldDefinition(visitedInputField) {
-      this.checkField(visitedInputField);
-      this.processSchema();
+    visitInputFieldDefinition(visitedInputField, options) {
+      this.#checkField(visitedInputField, options.objectType);
+      this.#processSchema();
     }
 
-    processSchema() {
+    #processSchema() {
       if (processedSchemas.has(this.schema)) {
         return;
       }
@@ -120,11 +116,11 @@ export function createNonNullDirective(opts?: TCreateDirectiveOptions): SchemaDi
       processedSchemas.add(this.schema);
     }
 
-    checkField(field) {
+    #checkField(field: GraphQLInputField, objectType: GraphQLObjectType) {
       const fieldName = field.astNode.name.value;
 
       if (field.type instanceof GraphQLNonNull) {
-        throw new Error(`@${directiveName} cannot be used on a field that is already non-nullish (! operator): "${fieldName}: ${field.type}"`);
+        throw new Error(`@${directiveName} cannot be used on a field that is already non-nullish (! operator): field "${fieldName}: ${field.type}" on input ${objectType.name}`);
       }
 
       return field;
