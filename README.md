@@ -2,6 +2,9 @@
 
 Makes your GraphQL input optional, but not null!
 
+Use version `1.x.x` for graphql-tools 7.  
+Use version `2.x.x` for graphql-tools 8.
+
 ## The problem
 
 [GraphQL Thread from 2018](https://github.com/graphql/graphql-spec/issues/542)

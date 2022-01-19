@@ -1,12 +1,12 @@
 import {
   defaultFieldResolver,
   GraphQLError,
-  GraphQLInputField,
+  GraphQLInputFieldConfig,
   GraphQLInputObjectType,
   GraphQLNonNull,
-  GraphQLObjectType,
+  GraphQLObjectType, GraphQLSchema,
 } from 'graphql';
-import { SchemaDirectiveVisitor, SchemaDirectiveVisitorClass } from 'graphql-tools';
+import { MapperKind, mapSchema } from '@graphql-tools/utils';
 import get from 'lodash/get';
 
 /*
@@ -19,22 +19,30 @@ type TCreateDirectiveOptions = {
   buildInputError?: (message: string) => any,
 };
 
-export function createNonNullDirective(opts?: TCreateDirectiveOptions): SchemaDirectiveVisitorClass {
+type Return = {
+  typeDefs: string,
+  directiveTransformer: (schema: GraphQLSchema) => GraphQLSchema,
+};
+
+export function createNonNullDirective(opts?: TCreateDirectiveOptions): Return {
   const directiveName = opts?.directiveName ?? 'nonNull';
   const buildInputError = opts?.buildInputError ?? ((message: string) => new GraphQLError(message));
 
-  const processedSchemas = new WeakSet();
+  return {
+    typeDefs: `directive @${directiveName} on INPUT_FIELD_DEFINITION`,
+    directiveTransformer(schema: GraphQLSchema) {
+      schema = mapSchema(schema, {
+        [MapperKind.INPUT_OBJECT_FIELD](fieldConfig: GraphQLInputFieldConfig, fieldName: string, typeName: string) {
+          // const fieldName = field.astNode.name.value;
 
-  class NonNullDirective extends SchemaDirectiveVisitor {
-    visitInputFieldDefinition(visitedInputField, options) {
-      this.#checkField(visitedInputField, options.objectType);
-      this.#processSchema();
-    }
+          if (fieldConfig.type instanceof GraphQLNonNull) {
+            // on input ${objectType.name}
+            throw new Error(`@${directiveName} cannot be used on a field that is already non-nullish (! operator): field "${fieldName}: ${typeName}"`);
+          }
 
-    #processSchema() {
-      if (processedSchemas.has(this.schema)) {
-        return;
-      }
+          return fieldConfig;
+        }
+      });
 
       // @nonNull tags inputs (parameters)
       // but the only way to enforce @nonNull is to transform the `resolve` function of the field that use the input.
@@ -113,19 +121,7 @@ export function createNonNullDirective(opts?: TCreateDirectiveOptions): SchemaDi
         }
       }
 
-      processedSchemas.add(this.schema);
-    }
-
-    #checkField(field: GraphQLInputField, objectType: GraphQLObjectType) {
-      const fieldName = field.astNode.name.value;
-
-      if (field.type instanceof GraphQLNonNull) {
-        throw new Error(`@${directiveName} cannot be used on a field that is already non-nullish (! operator): field "${fieldName}: ${field.type}" on input ${objectType.name}`);
-      }
-
-      return field;
+      return schema;
     }
   }
-
-  return NonNullDirective;
 }
